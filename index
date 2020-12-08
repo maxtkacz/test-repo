@@ -1,0 +1,161 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "formId": "gMc45jxv"
+      },
+      "name": "Typeform Trigger",
+      "type": "n8n-nodes-base.typeformTrigger",
+      "typeVersion": 1,
+      "position": [
+        350,
+        290
+      ],
+      "webhookId": "89ddaf0c-b553-4b62-b697-bcba128a1ee0",
+      "notesInFlow": true,
+      "credentials": {
+        "typeformApi": "max@n8n.io"
+      },
+      "notes": "Form: Get a demo"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{$json[\"Last question, what size is your company?\"]}}",
+              "value2": "51+"
+            }
+          ]
+        }
+      },
+      "name": "Large company?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [
+        550,
+        290
+      ],
+      "notesInFlow": true,
+      "notes": "51+ employees"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "enterprise-sales",
+        "text": "=",
+        "attachments": [],
+        "otherOptions": {},
+        "blocksUi": {
+          "blocksValues": [
+            {
+              "type": "section",
+              "textUi": {
+                "textValue": {
+                  "text": "=--------------\n🆕 Enterprise lead submitted:\n*Name:* {{$node[\"Typeform Trigger\"].json[\"First up, what should we call you?\"]}}\n*Pain point:* {{$node[\"Typeform Trigger\"].json[\"What's the main problem you're looking to solve right now?\"]}}\n\n*Insights:*\n• LinkedIn: www.linkedin.com/{{$node[\"Clearbit\"].json[\"linkedin\"][\"handle\"]}}\n• Industry: {{$node[\"Clearbit\"].json[\"category\"][\"industry\"]}}\n• Location: {{$node[\"Clearbit\"].json[\"twitter\"][\"location\"]}}\n• Tech stack: {{$node[\"Clearbit\"].json[\"tech\"].join(', ')}}\n--------------"
+                }
+              },
+              "accessoryUi": {
+                "accessoriesValues": {
+                  "text": "Email this lead",
+                  "url": "=https://inbox.google.com/?to={{encodeURIComponent($node[\"Typeform Trigger\"].json[\"Great. Now what's your email?\"])}}&subject={{encodeURIComponent($node[\"Typeform Trigger\"].json[\"First up, what should we call you?\"]+\", following up on your demo request\")}}",
+                  "style": "primary"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "name": "Slack",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        980,
+        140
+      ],
+      "credentials": {
+        "slackOAuth2Api": "integration3"
+      }
+    },
+    {
+      "parameters": {
+        "domain": "={{$json[\"Great. Now what's your email?\"].substring($json[\"Great. Now what's your email?\"].indexOf('@') + 1)}}",
+        "additionalFields": {}
+      },
+      "name": "Clearbit",
+      "type": "n8n-nodes-base.clearbit",
+      "typeVersion": 1,
+      "position": [
+        750,
+        140
+      ],
+      "credentials": {
+        "clearbitApi": "integration@n8n.io"
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "channel": "sme-sales",
+        "text": "=--------------\n🆕 Enterprise lead submitted:\nName: {{$json[\"First up, what should we call you?\"]}}\nPain point: {{$json[\"What's the main problem you're looking to solve right now?\"]}}\n<mailto:{{$json[\"Great. Now what's your email?\"]}}|Email {{$json[\"First up, what should we call you?\"]}}>\n--------------",
+        "attachments": [],
+        "otherOptions": {},
+        "blocksUi": {
+          "blocksValues": []
+        }
+      },
+      "name": "Slack1",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 1,
+      "position": [
+        750,
+        360
+      ],
+      "credentials": {
+        "slackOAuth2Api": "integration3"
+      }
+    }
+  ],
+  "connections": {
+    "Typeform Trigger": {
+      "main": [
+        [
+          {
+            "node": "Large company?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Large company?": {
+      "main": [
+        [
+          {
+            "node": "Clearbit",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Slack1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Clearbit": {
+      "main": [
+        [
+          {
+            "node": "Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  }
+}
